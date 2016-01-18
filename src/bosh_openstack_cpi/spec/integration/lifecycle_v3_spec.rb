@@ -77,7 +77,7 @@ describe Bosh::OpenStackCloud::Cloud do
 
     context 'with missing VM id' do
 
-      it 'should return false' do
+      it 'should return false', :focus => true do
         logger.info("Checking VM existence")
         expect(cpi).to_not have_vm('non-existing-vm-id')
       end
