@@ -93,23 +93,43 @@ def run
       request[:target] = target_service(request, catalog)
     end
 
-    catalog['access']['serviceCatalog'].each do |catalog_entry|
-      puts "### All calls for API endpoint '#{catalog_entry['type']} (#{catalog_entry['name']})'"
+    lines = catalog['access']['serviceCatalog']
+    .sort_by { |entry| entry['type'] }
+    .reduce([]) do |result, catalog_entry|
+      result << "### All calls for API endpoint '#{catalog_entry['type']} (#{catalog_entry['name']})'"
       filtered_requests = requests.select { |request| request[:target][:type] == catalog_entry['type'] }
       if !filtered_requests.empty?
-        puts '```'
-        filtered_requests.sort_by! { |request| request[:path] }
-        filtered_requests.each do |request|
-          body = ''
-          if request[:body]
-            body = "body: #{unescape_double_quote(request[:body])}"
-          end
-          puts "#{request[:method]} #{request[:path]} #{body}"
-        end
-        puts '```'
-        puts
+        result << '```'
+        result.concat filtered_requests.map { |request|
+                        body = ''
+                        if request[:body]
+                          body = " body: #{unescape_double_quote(request[:body])}"
+                        end
+                        "#{request[:method]} #{request[:path]}#{body}"
+                      }.sort
+        result << '```'
+        result << ''
       end
+      result
     end
+    lines.each { |line| puts line }
+
+    # catalog['access']['serviceCatalog'].each do |catalog_entry|
+    #   puts "### All calls for API endpoint '#{catalog_entry['type']} (#{catalog_entry['name']})'"
+    #   filtered_requests = requests.select { |request| request[:target][:type] == catalog_entry['type'] }
+    #   if !filtered_requests.empty?
+    #     puts '```'
+    #     filtered_requests.map do |request|
+    #       body = ''
+    #       if request[:body]
+    #         body = " body: #{unescape_double_quote(request[:body])}"
+    #       end
+    #       "#{request[:method]} #{request[:path]}#{body}"
+    #     end.sort.each {|line| puts line}
+    #     puts '```'
+    #     puts
+    #   end
+    # end
   else
     puts 'No catalog found'
   end
